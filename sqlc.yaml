@@ -1,6 +1,6 @@
 version: "1"
 packages: 
-- name: "db"
+  - name: "db"
     path: "./db/sqlc"
     queries: "./db/query/"
     schema: "./db/migration/"
@@ -9,3 +9,5 @@ packages:
     emit_prepared_queries: false
     emit_interface: false
     emit_exact_table_names: false
+
+
