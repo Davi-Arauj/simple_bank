@@ -13,8 +13,7 @@ type Store struct {
 
 func NewStore(db *sql.DB) *Store {
 	return &Store{
-		db:      db,
-		Queries: New(db),
+		db: db,
 	}
 }
 
@@ -37,12 +36,14 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 	return tx.Commit()
 }
 
+// TransferTxParams contains the input parameters of the transfer transaction
 type TransferTxParams struct {
 	FromAccountID int64 `json:"from_account_id"`
 	ToAccountID   int64 `json:"to_account_id"`
 	Amount        int64 `json:"amount"`
 }
 
+// TransferTxResult is the result of the transfer transaction
 type TransferTxResult struct {
 	Transfer    Transfer `json:"transfer"`
 	FromAccount Account  `json:"from_account"`
@@ -68,13 +69,13 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
-			Amount:    arg.Amount,
+			Amount:    -arg.Amount,
 		})
 		if err != nil {
 			return err
 		}
 
-		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
+		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
 		})
