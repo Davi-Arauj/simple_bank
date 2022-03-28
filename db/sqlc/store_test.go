@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,11 +11,14 @@ import (
 func TestTransferTx(t *testing.T) {
 
 	store := NewStore(testDB)
+
 	account1 := createRandomAccount(t)
 	account2 := createRandomAccount(t)
+	fmt.Println(">> before:", account1.Balance, account2.Balance)
 
 	n := 5
 	amount := int64(10)
+
 	errs := make(chan error)
 	results := make(chan TransferTxResult)
 
@@ -28,7 +30,7 @@ func TestTransferTx(t *testing.T) {
 				ToAccountID:   account2.ID,
 				Amount:        amount,
 			})
-			log.Println(amount)
+
 			errs <- err
 			results <- result
 		}()
@@ -41,7 +43,7 @@ func TestTransferTx(t *testing.T) {
 		result := <-results
 		require.NotEmpty(t, result)
 
-		//check transfer
+		// check transfer
 		transfer := result.Transfer
 		require.NotEmpty(t, transfer)
 		require.Equal(t, account1.ID, transfer.FromAccountID)
@@ -49,17 +51,14 @@ func TestTransferTx(t *testing.T) {
 		require.Equal(t, amount, transfer.Amount)
 		require.NotZero(t, transfer.ID)
 		require.NotZero(t, transfer.CreatedAt)
+		_, err = store.GetTransfer(context.Background(), transfer.ID)
+		require.NoError(t, err)
 
-		fmt.Printf("\nAmount:-->%v\n", amount)
-
-		// _, err = store.GetTransfer(context.Background(), transfer.ID)
-		// require.NoError(t, err)
-
-		//check entries
+		// check entries
 		fromEntry := result.FromEntry
 		require.NotEmpty(t, fromEntry)
 		require.Equal(t, account1.ID, fromEntry.AccountID)
-		require.Equal(t, -amount, fromEntry.AccountID)
+		require.Equal(t, -amount, fromEntry.Amount)
 		require.NotZero(t, fromEntry.ID)
 		require.NotZero(t, fromEntry.CreatedAt)
 
@@ -68,8 +67,8 @@ func TestTransferTx(t *testing.T) {
 
 		toEntry := result.ToEntry
 		require.NotEmpty(t, toEntry)
-		require.Equal(t, account1.ID, toEntry.AccountID)
-		require.Equal(t, amount, toEntry.AccountID)
+		require.Equal(t, account2.ID, toEntry.AccountID)
+		require.Equal(t, amount, toEntry.Amount)
 		require.NotZero(t, toEntry.ID)
 		require.NotZero(t, toEntry.CreatedAt)
 

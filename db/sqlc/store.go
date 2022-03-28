@@ -13,7 +13,8 @@ type Store struct {
 
 func NewStore(db *sql.DB) *Store {
 	return &Store{
-		db: db,
+		db:      db,
+		Queries: New(db),
 	}
 }
 
@@ -82,9 +83,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		if err != nil {
 			return err
 		}
-
 		//TODO: update accounts' balance
-		
 
 		return nil
 	})
