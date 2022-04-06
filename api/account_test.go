@@ -295,7 +295,6 @@ func TestListAccountAPI(t *testing.T) {
 			url := "/accounts"
 			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
-
 			//Add query parameters to request URL
 			q := request.URL.Query()
 			q.Add("page_id", fmt.Sprintf("%d", tc.query.pageID))
