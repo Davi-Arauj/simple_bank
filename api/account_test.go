@@ -110,10 +110,10 @@ func TestCreateAccountAPI(t *testing.T) {
 	account := randomAccount()
 
 	testCases := []struct {
-		name         string
-		body         gin.H
-		buildStubs   func(store *mockdb.MockStore)
-		expectStatus int
+		name          string
+		body          gin.H
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recoder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
@@ -130,7 +130,10 @@ func TestCreateAccountAPI(t *testing.T) {
 
 				store.EXPECT().CreateAccount(gomock.Any(), gomock.Eq(arg)).Times(1).Return(account, nil)
 			},
-			expectStatus: http.StatusOK,
+			checkResponse: func(recoder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, recoder.Code)
+				requireBodyMatchAccount(t, recoder.Body, account)
+			},
 		},
 		{
 			name: "InvalidCurrency",
@@ -141,7 +144,9 @@ func TestCreateAccountAPI(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Times(0)
 			},
-			expectStatus: http.StatusBadRequest,
+			checkResponse: func(recoder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recoder.Code)
+			},
 		},
 		{
 			name: "InvalidOwner",
@@ -152,7 +157,9 @@ func TestCreateAccountAPI(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Times(0)
 			},
-			expectStatus: http.StatusBadRequest,
+			checkResponse: func(recoder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, recoder.Code)
+			},
 		},
 		{
 			name: "InternalError",
@@ -163,7 +170,9 @@ func TestCreateAccountAPI(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateAccount(gomock.Any(), gomock.Any()).Times(1).Return(db.Account{}, sql.ErrConnDone)
 			},
-			expectStatus: http.StatusInternalServerError,
+			checkResponse: func(recoder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, recoder.Code)
+			},
 		},
 	}
 
@@ -188,7 +197,7 @@ func TestCreateAccountAPI(t *testing.T) {
 			require.NoError(t, err)
 
 			server.router.ServeHTTP(recorder, request)
-			require.Equal(t, tc.expectStatus, recorder.Code)
+			tc.checkResponse(recorder)
 		})
 	}
 }
